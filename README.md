@@ -94,17 +94,17 @@ pip install -r requirements.txt
 From the `src/` directory:
 
 ```bash
-python main.py \
-  --input_size 140 \
-  --hidden_size 64 \
-  --num_layers 1 \
-  --output_size 2 \
-  --window_size 10 \
-  --step_size 3 \
-  --batch_size 64 \
-  --global_iters 5 \
-  --local_epochs 5 \
-  --lr 0.001 \
+python main.py
+  --input_size 140
+  --hidden_size 64 
+  --num_layers 1 
+  --output_size 2
+  --window_size 10
+  --step_size 3
+  --batch_size 64
+  --global_iters 5
+  --local_epochs 5
+  --lr 0.001
 ```
 or just try
 
