@@ -122,13 +122,14 @@ Using device: cuda
 Training on domain: blackhole_var10_base
 Epoch 1/5, Loss: 0.6934
 ...
-[blackhole_var10_base] n=12345 | acc=0.91 | f1=0.90 | auc=0.95 | loss=0.21 | cm=[[...]]
-...
+[blackhole_var10_base] n=2160 | acc=0.5111111402511597 | f1=0.676470588235294 | auc=0.5004734848484849 | loss=21.529428482055664 | cm=[[   0 1056]
+ [   0 1104]]
+[blackhole_var10...
 === Aggregates (computed from per-domain) ===
-Accuracy: 92.31%
-F1: 0.9031
-AUC : 0.9487
-Loss : 0.2142
+Accuracy: 59.82%
+F1: 0.5477
+AUC : 0.7422
+Loss : 5.4910
 ```
 
 ---
