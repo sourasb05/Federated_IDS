@@ -107,6 +107,13 @@ python main.py \
   --local_epochs 5 \
   --lr 0.001 \
 ```
+or just try
+
+```bash
+python main.py
+
+```
+
 
 You should see logs like:
 
