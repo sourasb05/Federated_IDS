@@ -106,7 +106,6 @@ python main.py \
   --global_iters 5 \
   --local_epochs 5 \
   --lr 0.001 \
-  --save_dir ./results
 ```
 
 You should see logs like:
