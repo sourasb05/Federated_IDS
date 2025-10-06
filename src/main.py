@@ -1,23 +1,13 @@
 import os
-import sys
-import random
-import argparse
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
 from collections import OrderedDict
-
-import matplotlib.pyplot as plt
-
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     roc_auc_score, average_precision_score, confusion_matrix,
     balanced_accuracy_score, roc_curve, auc
 )
-
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -37,7 +27,7 @@ def main():
     project_root = os.path.dirname(current_directory)              # /proj/.../Local_IDS
     domains_path = os.path.join(project_root, 'attack_data') 
     
-    
+
     domains = utils.create_domains(domains_path)
 
     train_domains_loader = {}

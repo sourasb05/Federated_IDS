@@ -1,0 +1,24 @@
+# Python cache / compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+*.env
+
+
+# Model weights and experiment results
+*.pt
+*.pth
+*.ckpt
+results/
+wandb/
+
+# OS / editor specific files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
