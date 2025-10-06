@@ -14,7 +14,6 @@ scikit-learn
 scipy
 matplotlib
 torch
-wandb
 ```
 
 > Note: Installing `torch` sometimes depends on your CUDA version. If you need GPU support, follow the command from [https://pytorch.org](https://pytorch.org) for your system (e.g., `pip install torch --index-url https://download.pytorch.org/whl/cu121`).
