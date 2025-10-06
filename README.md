@@ -221,7 +221,4 @@ wandb/
 .DS_Store
 Thumbs.db
 ```
-
-> Keep `attack_data/` out of Git if it’s large or sensitive. You can version a small sample instead.
-
 ---
