@@ -56,13 +56,20 @@ def load_csv(path):
     return df
 
 
-def save_results_as_json(results, filename, save_folder="results"):
+def save_results_as_json(filename, results_to_save, project_root, save_folder="results"):
     os.makedirs(save_folder, exist_ok=True)
     filepath = os.path.join(save_folder, filename)
+    
     with open(filepath, 'w') as f:
-        json.dump(results, f, indent=4)
+        json.dump(results_to_save, f, indent=4)
     print(f"Saved results to {filepath}")
 
+    # Save the JSON file
+    save_path = os.path.join(project_root, filename)
+    with open(save_path, 'w') as f:
+        json.dump(results_to_save, f, indent=4)
+        print(f"\nMetrics successfully saved to: {save_path}")
+        
 
 # Function to create sliding windows
 def create_sliding_windows(X, y, window_size, step_size):
@@ -73,7 +80,7 @@ def create_sliding_windows(X, y, window_size, step_size):
     return np.array(sequences), np.array(labels)
 
 
-def load_data(domain_path, key, domain_dataset, window_size=10, step_size=3, batch_size=128):
+def load_data(domain_path, key, domain_dataset, window_size=10, step_size=3, batch_size=128, n_raw_features=None):
 
     files = sorted(domain_dataset, key=extract_index)[:20]  # ensure exactly 20, ordered
 
@@ -137,9 +144,12 @@ def load_data(domain_path, key, domain_dataset, window_size=10, step_size=3, bat
     X_train = torch.nan_to_num(X_train, nan=0.0)
     X_test  = torch.nan_to_num(X_test,  nan=0.0)
 
-    feature_dim = X_train.shape[1]  # (#features * SEQUENCE_LENGTH)
-    X_train = X_train.view(-1, 1, feature_dim)
-    X_test  = X_test.view(-1, 1, feature_dim)
+    # Reshape flat windows (B, T*F) → (B, T, F) so the LSTM sees real timesteps.
+    # If n_raw_features is not supplied, infer it from window_size.
+    if n_raw_features is None:
+        n_raw_features = X_train.shape[1] // window_size
+    X_train = X_train.view(-1, window_size, n_raw_features)
+    X_test  = X_test.view(-1, window_size, n_raw_features)
     
     # print(f"After view: X_train={X_train.shape}, X_test={X_test.shape}")
 
@@ -156,11 +166,15 @@ def load_data(domain_path, key, domain_dataset, window_size=10, step_size=3, bat
 
     return train_loader, test_loader
 
-def create_domains(domains_path):
+def create_domains(domains_path, assigned_domains=None):
 
         # Iterate over each item in the source folder.
     domains = {}
-    for domain  in os.listdir(domains_path):
+    all_domains = os.listdir(domains_path)
+    if assigned_domains is not None:
+        all_domains = [d for d in all_domains if d in assigned_domains]
+
+    for domain  in all_domains:
         
         domain_path = os.path.join(domains_path, domain)
         
@@ -246,18 +260,21 @@ def parse_args():
     # Data processing hyperparameters
     parser.add_argument('--window_size', type=int, default=10,
                         help='Sliding window size for sequence generation')
-    parser.add_argument('--step_size', type=int, default=3,
+    parser.add_argument('--step_size', type=int, default=2,
                         help='Step size for sliding window')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='Batch size for DataLoader')
 
     # Federated learning hyperparameters
-    parser.add_argument('--global_iters', type=int, default=5,
+    parser.add_argument('--global_iters', type=int, default=20,
                         help='Number of global communication rounds')
     parser.add_argument('--local_epochs', type=int, default=5,
                         help='Number of local epochs per domain/client')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate for local optimizers')
+    parser.add_argument('--algorithm', type=str, default='tvae',
+                        choices=['fedavg', 'tvae', 'tabvae', 'Rvae', 'replay', 'pcflta', 'gmm', 'timevae'],
+                        help='Federated learning algorithm to use')
 
     # Paths and environment
     parser.add_argument('--seed', type=int, default=42,

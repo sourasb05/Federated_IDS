@@ -1,4 +1,7 @@
+from http import server
+import json
 import os
+from flask import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,9 +13,12 @@ from sklearn.metrics import (
 )
 import warnings
 warnings.filterwarnings("ignore")
+import sys
 
 # our defined functions
 
+from client import Client
+from server import server
 import utils as utils
 import models as models
 import evaluate_model as evaluate_model
@@ -30,97 +36,163 @@ def main():
 
     domains = utils.create_domains(domains_path)
 
-    train_domains_loader = {}
-    test_domains_loader = {}
-    per_domain_results = OrderedDict()
+    client_list = []
 
+    tot_time_steps = 4
+    max_client_participants = 3
 
-    for key, files in domains.items():
-        train_domains_loader[key], test_domains_loader[key] = utils.load_data(domains_path, key, files, window_size=args.window_size, step_size=args.step_size, batch_size=args.batch_size)
-          
-    # each domain/key is a client now. We will train a federated model across all these clients/domains/keys.
-
-    model = models.LSTMClassifier(input_dim=args.input_size, hidden_dim=args.hidden_size, output_dim=args.output_size, num_layers=args.num_layers, fc_hidden_dim=10).to(device)
-
+    domain_keys = [key for key in domains.keys() if "worstparent" in key]
+    #domain_keys = [key for key in domains.keys()]
     
-    for iter in range(args.global_iters):
-        
-        print(f"\n--- Global Iteration {iter+1} / {args.global_iters} ---")
+    print(f"{len(domain_keys)}domain_keys: {domain_keys}")
+    client_distributions = {i: [] for i in range(max_client_participants)}
+    # 3. Distribute the domains using round-robin
+    for i, key in enumerate(domain_keys):
+        client_id = i % max_client_participants
+        client_distributions[client_id].append(key)
 
-        local_models = []
-        local_data_sizes = []
+    print("\n--- Domain Distribution ---")
+    for client_id, assigned_domains in client_distributions.items():
+        print(f"Client {client_id+1} (Total: {len(assigned_domains)}): {assigned_domains}")
 
-        for domain_key in domains.keys():
-            print(f"\nTraining on domain: {domain_key}")
 
-            local_model = models.LSTMClassifier(input_dim=args.input_size, hidden_dim=args.hidden_size, output_dim=args.output_size, num_layers=args.num_layers, fc_hidden_dim=10).to(device)
-            local_model.load_state_dict(model.state_dict())  # Initialize with global model weights
 
-            optimizer = optim.Adam(local_model.parameters(), lr=args.lr)
-            criterion = nn.CrossEntropyLoss()
+    for i in range(0, max_client_participants):
+        print(f"\n=== Initializing with {i} client(s) participating ===")
+        print(f"domain distribution for {i} clients: {list(client_distributions[i])}")
 
-            train_loader = train_domains_loader[domain_key]
-            test_loader = test_domains_loader[domain_key]
+    # ── auto-compute input_size from data ──────────────────────────
+    # input_size must equal window_size × n_raw_features.
+    # Hardcoding it separately from window_size causes shape mismatches
+    # when either value changes.  Peek at the first CSV to get n_features.
+    first_domain_key  = domain_keys[0]
+    first_file_name   = domains[first_domain_key][0]
+    first_file_path   = os.path.join(domains_path, first_domain_key, first_file_name)
+    _sample_df        = utils.load_csv(first_file_path)
+    n_raw_features    = len([c for c in _sample_df.columns if c != 'label'])
+    args.input_size   = args.window_size * n_raw_features
+    args.n_raw_features = n_raw_features
+    print(f"\nAuto-computed input_size: {args.window_size} (window) × "
+          f"{n_raw_features} (features) = {args.input_size}")
 
-            local_model.train()
-            for epoch in range(args.local_epochs):
-                epoch_loss = 0.0
-                for X_batch, y_batch in train_loader:
-                    X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+    # input_dim = n_raw_features (per-step features), NOT window_size * n_raw_features.
+    # The LSTM now sees (B, window_size, n_raw_features) — real temporal sequences.
+    # num_layers=2 stacks two LSTM layers for deeper temporal abstraction.
+    model = models.LSTMClassifier(input_dim=n_raw_features, hidden_dim=args.hidden_size, output_dim=args.output_size, num_layers=2, fc_hidden_dim=32).to(device)
 
-                    optimizer.zero_grad()
-                    outputs, _ = local_model(X_batch)
-                    loss = criterion(outputs, y_batch)
-                    loss.backward()
-                    optimizer.step()
+    # Trigger the server execution based on the chosen algorithm
+    if args.algorithm == 'fedavg':
+        server(
+            args=args, 
+            model=model, 
+            device=device, 
+            domains_path=domains_path, 
+            client_distributions=client_distributions, 
+            max_client_participants=max_client_participants, 
+            tot_time_steps=tot_time_steps, 
+            project_root=project_root
+        )
 
-                    epoch_loss += loss.item() * X_batch.size(0)
+    elif args.algorithm == 'tabvae':
+        from server_TabVAE import server_tabvae
 
-                epoch_loss /= len(train_loader.dataset)
-                print(f"Epoch {epoch+1}/{args.local_epochs}, Loss: {epoch_loss:.4f}")
+        server_tabvae(
+            args=args, 
+            model=model, 
+            device=device, 
+            domains_path=domains_path, 
+            client_distributions=client_distributions, 
+            max_client_participants=max_client_participants, 
+            tot_time_steps=tot_time_steps, 
+            project_root=project_root
+        )
+    elif args.algorithm == 'tvae':
+        from server_TVAE import server_tvae
 
-            local_models.append(local_model.state_dict())
-            local_data_sizes.append(len(train_loader.dataset))
+        server_tvae(
+            args=args,
+            model=model,
+            device=device,
+            domains_path=domains_path,
+            client_distributions=client_distributions,
+            max_client_participants=max_client_participants,
+            tot_time_steps=tot_time_steps,
+            project_root=project_root
+        )
 
-        # Aggregate local models
-        global_state_dict = model.state_dict()
-        for key in global_state_dict.keys():
-            global_state_dict[key] = sum(local_models[i][key] * (local_data_sizes[i] / sum(local_data_sizes)) for i in range(len(local_models)))
-        model.load_state_dict(global_state_dict)
+    elif args.algorithm == 'Rvae':
+        from server_RVAE import server_rvae
 
-        for domain in domains.keys():
-            metrics = evaluate_model.eval_global(model, test_domains_loader[domain], device)
-            per_domain_results[domain] = {
-                'n': metrics['n'], 'loss': None if metrics['loss'] is None else float(metrics['loss']),
-                'acc': None if metrics['acc'] is None else float(metrics['acc']),
-                'f1': None if metrics['f1'] is None else float(metrics['f1']),
-                'auc': None if metrics['auc'] is None else float(metrics['auc']),
-                'cm': None if metrics['cm'] is None else metrics['cm'].tolist(),
-            }
-            print(f"[{domain}] n={metrics['n']} | acc={metrics['acc']} | f1={metrics['f1']} | auc={metrics['auc']} | loss={metrics['loss']} | cm={metrics['cm']}")
-        
-    # aggregate (size-weighted) across domains for your own record
-    total_n = sum((v['n'] or 0) for v in per_domain_results.values())
-    auc_weighted = None
-    if total_n > 0:
-        acc_weighted = sum((v['acc'] or 0.0) * (v['n'] or 0) for v in per_domain_results.values()) / total_n
-        f1_vals = [v for v in per_domain_results.values() if v['f1'] is not None and v['n']]
-        f1_weighted = (sum(v['f1'] * v['n'] for v in f1_vals) / sum(v['n'] for v in f1_vals)) if f1_vals else None
-        auc_vals = [v for v in per_domain_results.values() if v['auc'] is not None and v['n']]
-        auc_weighted = (sum(v['auc'] * v['n'] for v in auc_vals) / sum(v['n'] for v in auc_vals)) if auc_vals else None
-        loss_vals = [v for v in per_domain_results.values() if v['loss'] is not None and v['n']]
-        loss_weighted = (sum(v['loss'] * v['n'] for v in loss_vals) / sum(v['n'] for v in loss_vals)) if loss_vals else None
-        
-    else:
-        acc_weighted = f1_weighted = loss_weighted = None
+        server_rvae(
+            args=args,
+            model=model,
+            device=device,
+            domains_path=domains_path,
+            client_distributions=client_distributions,
+            max_client_participants=max_client_participants,
+            tot_time_steps=tot_time_steps,
+            project_root=project_root
+        )
 
-    print("\n=== Aggregates (computed from per-domain) ===")
-    print(f"Accuracy: {None if acc_weighted is None else f'{acc_weighted*100:.2f}%'}")
-    print(f"F1: {None if f1_weighted is None else f'{f1_weighted:.4f}'}")
-    print(f"AUC : {None if auc_weighted is None else f'{auc_weighted:.4f}'}")
-    print(f"Loss : {None if loss_weighted is None else f'{loss_weighted:.4f}'}")
+    elif args.algorithm == 'replay':
+        from server_Replay import server_replay
 
-        
+        server_replay(
+            args=args,
+            model=model,
+            device=device,
+            domains_path=domains_path,
+            client_distributions=client_distributions,
+            max_client_participants=max_client_participants,
+            tot_time_steps=tot_time_steps,
+            project_root=project_root,
+            buffer_size=500
+        )
+
+    elif args.algorithm == 'pcflta':
+        from server_PCFLTA import server_pcflta
+
+        server_pcflta(
+            args=args,
+            model=model,
+            device=device,
+            domains_path=domains_path,
+            client_distributions=client_distributions,
+            max_client_participants=max_client_participants,
+            tot_time_steps=tot_time_steps,
+            project_root=project_root,
+            n_clusters=3
+        )
+
+    elif args.algorithm == 'gmm':
+        from server_GMM import server_gmm
+
+        server_gmm(
+            args=args,
+            model=model,
+            device=device,
+            domains_path=domains_path,
+            client_distributions=client_distributions,
+            max_client_participants=max_client_participants,
+            tot_time_steps=tot_time_steps,
+            project_root=project_root,
+            n_components=10,
+        )
+
+    elif args.algorithm == 'timevae':
+        from server_TimeVAE import server_timevae
+
+        server_timevae(
+            args=args,
+            model=model,
+            device=device,
+            domains_path=domains_path,
+            client_distributions=client_distributions,
+            max_client_participants=max_client_participants,
+            tot_time_steps=tot_time_steps,
+            project_root=project_root,
+        )
+
 if __name__ == "__main__":
 
     main()
