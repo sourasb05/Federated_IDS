@@ -1,0 +1,116 @@
+{
+  "csv": "/Users/souba636/Documents/Research/Projects/vinnova_paper_2/Federated_IDS/attack_data/worstparent_var5_base/16_features_timeseries_60_sec.csv",
+  "domain": "worstparent_var5_base",
+  "file": "16_features_timeseries_60_sec.csv",
+  "n_train": 710,
+  "n_features": 14,
+  "n_sparse": 13,
+  "sparse_features": [
+    "disr",
+    "diss",
+    "dior",
+    "dios",
+    "diar",
+    "tots",
+    "rank.1",
+    "disr.1",
+    "diss.1",
+    "dior.1",
+    "dios.1",
+    "diar.1",
+    "tots.1"
+  ],
+  "ks_mean": 0.2587,
+  "ks_pass": 4,
+  "ks_total": 14,
+  "ks_per_feature": [
+    {
+      "feature": "dior.1",
+      "ks_stat": 0.6088,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "rank",
+      "ks_stat": 0.4292,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "diar",
+      "ks_stat": 0.4086,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "tots.1",
+      "ks_stat": 0.3825,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "dior",
+      "ks_stat": 0.3773,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "diar.1",
+      "ks_stat": 0.3646,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "dios.1",
+      "ks_stat": 0.265,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "tots",
+      "ks_stat": 0.2566,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "dios",
+      "ks_stat": 0.2378,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "rank.1",
+      "ks_stat": 0.2094,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "disr",
+      "ks_stat": 0.0307,
+      "p_value": 0.814,
+      "pass": true
+    },
+    {
+      "feature": "diss.1",
+      "ks_stat": 0.0193,
+      "p_value": 0.9969,
+      "pass": true
+    },
+    {
+      "feature": "disr.1",
+      "ks_stat": 0.0183,
+      "p_value": 0.9985,
+      "pass": true
+    },
+    {
+      "feature": "diss",
+      "ks_stat": 0.0143,
+      "p_value": 1.0,
+      "pass": true
+    }
+  ],
+  "tstr_f1": 1.0,
+  "trts_f1": 0.9629,
+  "base_f1": 1.0,
+  "gap": 0.0371
+}

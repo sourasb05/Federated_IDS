@@ -1,0 +1,127 @@
+model,class,feature,ks_stat,p_value,passed
+TimeVAE,overall,disr,1.0,0.0,False
+TimeVAE,overall,diss,0.9985,0.0,False
+TimeVAE,overall,diss.1,0.9985,0.0,False
+TimeVAE,overall,disr.1,0.9945,0.0,False
+TimeVAE,overall,diar,0.6023,0.0,False
+TimeVAE,overall,diar.1,0.5985,0.0,False
+TimeVAE,overall,rank.1,0.2541,0.0,False
+TimeVAE,overall,rank,0.207,0.0,False
+TimeVAE,overall,dior,0.1658,0.0,False
+TimeVAE,overall,dior.1,0.1498,0.0,False
+TimeVAE,overall,tots,0.1425,0.0,False
+TimeVAE,overall,dios.1,0.1348,0.0,False
+TimeVAE,overall,tots.1,0.1318,0.0,False
+TimeVAE,overall,dios,0.1199,0.0001,False
+TimeVAE,normal,disr,1.0,0.0,False
+TimeVAE,normal,diss,0.998,0.0,False
+TimeVAE,normal,diss.1,0.998,0.0,False
+TimeVAE,normal,disr.1,0.997,0.0,False
+TimeVAE,normal,diar,0.6075,0.0,False
+TimeVAE,normal,diar.1,0.6018,0.0,False
+TimeVAE,normal,rank,0.4368,0.0,False
+TimeVAE,normal,rank.1,0.4254,0.0,False
+TimeVAE,normal,dior,0.195,0.0,False
+TimeVAE,normal,tots,0.1745,0.0,False
+TimeVAE,normal,dios,0.1701,0.0,False
+TimeVAE,normal,dios.1,0.1692,0.0,False
+TimeVAE,normal,dior.1,0.1673,0.0,False
+TimeVAE,normal,tots.1,0.1619,0.0,False
+TimeVAE,attack,disr,1.0,0.0,False
+TimeVAE,attack,diss,0.999,0.0,False
+TimeVAE,attack,diss.1,0.999,0.0,False
+TimeVAE,attack,disr.1,0.992,0.0,False
+TimeVAE,attack,diar,0.6,0.0,False
+TimeVAE,attack,diar.1,0.5939,0.0,False
+TimeVAE,attack,rank.1,0.2854,0.0,False
+TimeVAE,attack,rank,0.2479,0.0,False
+TimeVAE,attack,dior,0.1725,0.0004,False
+TimeVAE,attack,tots,0.1463,0.0041,False
+TimeVAE,attack,dios,0.1421,0.0058,False
+TimeVAE,attack,tots.1,0.1309,0.014,False
+TimeVAE,attack,dior.1,0.1229,0.0251,False
+TimeVAE,attack,dios.1,0.1198,0.0313,False
+RVAE (GRU),overall,disr,1.0,0.0,False
+RVAE (GRU),overall,diss,1.0,0.0,False
+RVAE (GRU),overall,disr.1,1.0,0.0,False
+RVAE (GRU),overall,diss.1,1.0,0.0,False
+RVAE (GRU),overall,diar,0.4721,0.0,False
+RVAE (GRU),overall,diar.1,0.4721,0.0,False
+RVAE (GRU),overall,rank.1,0.2866,0.0,False
+RVAE (GRU),overall,rank,0.2019,0.0,False
+RVAE (GRU),overall,dior,0.146,0.0,False
+RVAE (GRU),overall,dios.1,0.125,0.0,False
+RVAE (GRU),overall,dios,0.1183,0.0001,False
+RVAE (GRU),overall,dior.1,0.1098,0.0004,False
+RVAE (GRU),overall,tots.1,0.1073,0.0005,False
+RVAE (GRU),overall,tots,0.1001,0.0015,False
+RVAE (GRU),normal,disr,1.0,0.0,False
+RVAE (GRU),normal,diss,1.0,0.0,False
+RVAE (GRU),normal,disr.1,1.0,0.0,False
+RVAE (GRU),normal,diss.1,1.0,0.0,False
+RVAE (GRU),normal,diar,0.4679,0.0,False
+RVAE (GRU),normal,diar.1,0.4679,0.0,False
+RVAE (GRU),normal,rank.1,0.2955,0.0,False
+RVAE (GRU),normal,rank,0.2264,0.0,False
+RVAE (GRU),normal,dios.1,0.1479,0.0002,False
+RVAE (GRU),normal,dior,0.1413,0.0004,False
+RVAE (GRU),normal,dios,0.1378,0.0006,False
+RVAE (GRU),normal,tots.1,0.1324,0.0011,False
+RVAE (GRU),normal,tots,0.116,0.0064,False
+RVAE (GRU),normal,dior.1,0.1132,0.0084,False
+RVAE (GRU),attack,disr,1.0,0.0,False
+RVAE (GRU),attack,diss,1.0,0.0,False
+RVAE (GRU),attack,disr.1,1.0,0.0,False
+RVAE (GRU),attack,diss.1,1.0,0.0,False
+RVAE (GRU),attack,diar,0.4788,0.0,False
+RVAE (GRU),attack,diar.1,0.4788,0.0,False
+RVAE (GRU),attack,rank.1,0.258,0.0,False
+RVAE (GRU),attack,rank,0.2537,0.0,False
+RVAE (GRU),attack,dios,0.1972,0.0,False
+RVAE (GRU),attack,dior.1,0.1824,0.0001,False
+RVAE (GRU),attack,dior,0.1705,0.0005,False
+RVAE (GRU),attack,tots,0.1607,0.0012,False
+RVAE (GRU),attack,dios.1,0.1572,0.0016,False
+RVAE (GRU),attack,tots.1,0.1517,0.0026,False
+ZI-RVAE,overall,dios.1,0.4716,0.0,False
+ZI-RVAE,overall,tots.1,0.4212,0.0,False
+ZI-RVAE,overall,dior.1,0.4151,0.0,False
+ZI-RVAE,overall,dios,0.3874,0.0,False
+ZI-RVAE,overall,dior,0.3614,0.0,False
+ZI-RVAE,overall,tots,0.3168,0.0,False
+ZI-RVAE,overall,diar,0.2382,0.0,False
+ZI-RVAE,overall,diar.1,0.2377,0.0,False
+ZI-RVAE,overall,rank.1,0.2365,0.0,False
+ZI-RVAE,overall,rank,0.2299,0.0,False
+ZI-RVAE,overall,disr,0.001,1.0,True
+ZI-RVAE,overall,diss,0.001,1.0,True
+ZI-RVAE,overall,disr.1,0.0005,1.0,True
+ZI-RVAE,overall,diss.1,0.0005,1.0,True
+ZI-RVAE,normal,dios.1,0.4405,0.0,False
+ZI-RVAE,normal,dior.1,0.416,0.0,False
+ZI-RVAE,normal,tots.1,0.4085,0.0,False
+ZI-RVAE,normal,dios,0.3722,0.0,False
+ZI-RVAE,normal,dior,0.3379,0.0,False
+ZI-RVAE,normal,tots,0.302,0.0,False
+ZI-RVAE,normal,rank,0.2961,0.0,False
+ZI-RVAE,normal,rank.1,0.2741,0.0,False
+ZI-RVAE,normal,diar,0.2415,0.0,False
+ZI-RVAE,normal,diar.1,0.2346,0.0,False
+ZI-RVAE,normal,disr,0.0,1.0,True
+ZI-RVAE,normal,diss,0.0,1.0,True
+ZI-RVAE,normal,disr.1,0.0,1.0,True
+ZI-RVAE,normal,diss.1,0.0,1.0,True
+ZI-RVAE,attack,dios.1,0.5648,0.0,False
+ZI-RVAE,attack,dios,0.5353,0.0,False
+ZI-RVAE,attack,dior.1,0.4938,0.0,False
+ZI-RVAE,attack,tots.1,0.4936,0.0,False
+ZI-RVAE,attack,dior,0.4616,0.0,False
+ZI-RVAE,attack,tots,0.4223,0.0,False
+ZI-RVAE,attack,rank,0.3913,0.0,False
+ZI-RVAE,attack,rank.1,0.2944,0.0,False
+ZI-RVAE,attack,diar.1,0.2554,0.0,False
+ZI-RVAE,attack,diar,0.2533,0.0,False
+ZI-RVAE,attack,disr,0.002,1.0,True
+ZI-RVAE,attack,diss,0.002,1.0,True
+ZI-RVAE,attack,disr.1,0.001,1.0,True
+ZI-RVAE,attack,diss.1,0.001,1.0,True

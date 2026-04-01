@@ -1,0 +1,170 @@
+{
+    "dataset": "disflooding_var20_dec",
+    "selected_features": [
+        "disr.1",
+        "disr",
+        "dios.1",
+        "dior.1",
+        "dior",
+        "tots",
+        "dios",
+        "tots.1"
+    ],
+    "feature_importance": [
+        {
+            "feature": "disr.1",
+            "anova_f": 0.994,
+            "mutual_info": 0.9987,
+            "spearman_rho": 0.9998,
+            "rf_gini": 0.846,
+            "mean_score": 0.9596,
+            "rank": 1
+        },
+        {
+            "feature": "disr",
+            "anova_f": 0.8517,
+            "mutual_info": 0.9973,
+            "spearman_rho": 1.0,
+            "rf_gini": 0.9556,
+            "mean_score": 0.9512,
+            "rank": 2
+        },
+        {
+            "feature": "dios.1",
+            "anova_f": 0.565,
+            "mutual_info": 0.9978,
+            "spearman_rho": 0.9342,
+            "rf_gini": 0.7443,
+            "mean_score": 0.8103,
+            "rank": 3
+        },
+        {
+            "feature": "dior.1",
+            "anova_f": 0.5606,
+            "mutual_info": 0.9973,
+            "spearman_rho": 0.9336,
+            "rf_gini": 0.7482,
+            "mean_score": 0.8099,
+            "rank": 4
+        },
+        {
+            "feature": "dior",
+            "anova_f": 0.8085,
+            "mutual_info": 0.9932,
+            "spearman_rho": 0.9338,
+            "rf_gini": 0.2851,
+            "mean_score": 0.7551,
+            "rank": 5
+        },
+        {
+            "feature": "tots",
+            "anova_f": 0.4253,
+            "mutual_info": 0.9965,
+            "spearman_rho": 0.9329,
+            "rf_gini": 0.589,
+            "mean_score": 0.7359,
+            "rank": 6
+        },
+        {
+            "feature": "dios",
+            "anova_f": 0.5433,
+            "mutual_info": 0.9939,
+            "spearman_rho": 0.9331,
+            "rf_gini": 0.2487,
+            "mean_score": 0.6797,
+            "rank": 7
+        },
+        {
+            "feature": "tots.1",
+            "anova_f": 0.2602,
+            "mutual_info": 0.9973,
+            "spearman_rho": 0.934,
+            "rf_gini": 0.3055,
+            "mean_score": 0.6243,
+            "rank": 8
+        },
+        {
+            "feature": "diss.1",
+            "anova_f": 0.3268,
+            "mutual_info": 0.9236,
+            "spearman_rho": 0.9813,
+            "rf_gini": 0.1308,
+            "mean_score": 0.5906,
+            "rank": 9
+        },
+        {
+            "feature": "diss",
+            "anova_f": 0.266,
+            "mutual_info": 0.922,
+            "spearman_rho": 0.9813,
+            "rf_gini": 0.1882,
+            "mean_score": 0.5894,
+            "rank": 10
+        },
+        {
+            "feature": "diar.1",
+            "anova_f": 0.0001,
+            "mutual_info": 0.0234,
+            "spearman_rho": 0.1283,
+            "rf_gini": 0.0,
+            "mean_score": 0.038,
+            "rank": 11
+        },
+        {
+            "feature": "diar",
+            "anova_f": 0.0,
+            "mutual_info": 0.0111,
+            "spearman_rho": 0.1287,
+            "rf_gini": 0.0017,
+            "mean_score": 0.0354,
+            "rank": 12
+        },
+        {
+            "feature": "rank.1",
+            "anova_f": 0.0,
+            "mutual_info": 0.07,
+            "spearman_rho": 0.0043,
+            "rf_gini": 0.0025,
+            "mean_score": 0.0192,
+            "rank": 13
+        },
+        {
+            "feature": "rank",
+            "anova_f": 0.0,
+            "mutual_info": 0.0592,
+            "spearman_rho": 0.005,
+            "rf_gini": 0.0035,
+            "mean_score": 0.0169,
+            "rank": 14
+        }
+    ],
+    "n_train_windows": 12044,
+    "n_test_windows": 5156,
+    "baseline_f1": 0.9977,
+    "results": {
+        "ZI-RVAE": {
+            "tstr_f1": 0.9886,
+            "trts_f1": 0.999,
+            "ks_mean_cls0": 0.3922,
+            "ks_mean_cls1": 0.1477,
+            "ks_pass_cls0": 2,
+            "ks_pass_cls1": 0
+        },
+        "ZI-LSTM-Attn": {
+            "tstr_f1": 0.9886,
+            "trts_f1": 0.9995,
+            "ks_mean_cls0": 0.3995,
+            "ks_mean_cls1": 0.1723,
+            "ks_pass_cls0": 2,
+            "ks_pass_cls1": 0
+        },
+        "ZI-Transformer": {
+            "tstr_f1": 0.9913,
+            "trts_f1": 0.9995,
+            "ks_mean_cls0": 0.4024,
+            "ks_mean_cls1": 0.1629,
+            "ks_pass_cls0": 2,
+            "ks_pass_cls1": 0
+        }
+    }
+}
