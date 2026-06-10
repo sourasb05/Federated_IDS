@@ -25,7 +25,12 @@ import evaluate_model as evaluate_model
 
 
 def main():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
     print(f"Using device: {device}")
     args = utils.parse_args()
 
@@ -38,28 +43,23 @@ def main():
 
     client_list = []
 
-    tot_time_steps = 4
-    max_client_participants = 3
+    tot_time_steps = args.tot_time_steps
+    max_client_participants = 5
+    overlap_p = args.overlap_p   # p=0 → disjoint, p=1 → all clients share all domains
 
-    domain_keys = [key for key in domains.keys() if "worstparent" in key]
-    #domain_keys = [key for key in domains.keys()]
-    
-    print(f"{len(domain_keys)}domain_keys: {domain_keys}")
-    client_distributions = {i: [] for i in range(max_client_participants)}
-    # 3. Distribute the domains using round-robin
-    for i, key in enumerate(domain_keys):
-        client_id = i % max_client_participants
-        client_distributions[client_id].append(key)
+    if args.attacktype:
+        domain_keys = [key for key in domains.keys() if args.attacktype in key]
+    else:
+        domain_keys = list(domains.keys())
 
-    print("\n--- Domain Distribution ---")
-    for client_id, assigned_domains in client_distributions.items():
-        print(f"Client {client_id+1} (Total: {len(assigned_domains)}): {assigned_domains}")
+    print(f"{len(domain_keys)} domain_keys: {domain_keys}")
 
-
-
-    for i in range(0, max_client_participants):
-        print(f"\n=== Initializing with {i} client(s) participating ===")
-        print(f"domain distribution for {i} clients: {list(client_distributions[i])}")
+    client_distributions = utils.distribute_domains(
+        domain_keys = domain_keys,
+        n_clients   = max_client_participants,
+        p           = overlap_p,
+        seed        = args.seed,
+    )
 
     # ── auto-compute input_size from data ──────────────────────────
     # input_size must equal window_size × n_raw_features.
@@ -185,6 +185,19 @@ def main():
         server_timevae(
             args=args,
             model=model,
+            device=device,
+            domains_path=domains_path,
+            client_distributions=client_distributions,
+            max_client_participants=max_client_participants,
+            tot_time_steps=tot_time_steps,
+            project_root=project_root,
+        )
+
+    elif args.algorithm == 'efl':
+        from server_EFL import server_efl
+
+        server_efl(
+            args=args,
             device=device,
             domains_path=domains_path,
             client_distributions=client_distributions,
