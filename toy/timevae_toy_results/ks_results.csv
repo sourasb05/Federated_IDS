@@ -1,0 +1,15 @@
+feature,ks_stat,p_value,similar
+disr,1.0,0.0,False
+diss.1,0.999,0.0,False
+disr.1,0.998,0.0,False
+diss,0.9875,0.0,False
+diar,0.6003,0.0,False
+diar.1,0.5887,0.0,False
+rank.1,0.2077,0.0,False
+rank,0.1929,0.0,False
+dior.1,0.1171,0.0001,False
+tots.1,0.1097,0.0004,False
+dios.1,0.0938,0.0036,False
+dior,0.0898,0.0061,False
+tots,0.089,0.0068,False
+dios,0.0568,0.195,True

@@ -166,6 +166,76 @@ def load_data(domain_path, key, domain_dataset, window_size=10, step_size=3, bat
 
     return train_loader, test_loader
 
+def distribute_domains(domain_keys: list, n_clients: int,
+                       p: float = 0.0, seed: int = 42) -> dict:
+    """
+    Distribute domain keys across N clients with a tunable overlap parameter p.
+
+    Parameters
+    ----------
+    domain_keys : list[str]
+        All available domain names (order does not matter).
+    n_clients : int
+        Number of clients.
+    p : float in [0, 1]
+        Overlap fraction.
+        p = 0  → fully disjoint: each client gets a different, non-overlapping
+                  subset of domains (random partition without replacement).
+        p = 1  → fully shared: every client gets all domains.
+        p = x  → x·D domains are shared by all clients; the remaining
+                  (1-x)·D domains are split disjointly across clients.
+    seed : int
+        Random seed for reproducibility.
+
+    Returns
+    -------
+    dict[int, list[str]]
+        client_id → list of assigned domain keys
+
+    Examples
+    --------
+    D=10 domains, N=2 clients, p=0.4:
+      shared pool  = 4 domains  (every client gets these)
+      private pool = 6 domains  → split into 2 chunks of 3 each
+      client 0 = shared(4) + private_chunk_0(3)  = 7 domains
+      client 1 = shared(4) + private_chunk_1(3)  = 7 domains
+      overlap between any two clients = 4/7 ≈ 57% of their list
+    """
+    p = float(np.clip(p, 0.0, 1.0))
+    D = len(domain_keys)
+    rng = np.random.default_rng(seed)
+
+    shuffled = list(domain_keys)
+    rng.shuffle(shuffled)
+
+    k_shared  = int(round(p * D))           # domains every client receives
+    k_private = D - k_shared                # domains split disjointly
+
+    shared_pool  = shuffled[:k_shared]
+    private_pool = shuffled[k_shared:]      # length = k_private
+
+    # Split private_pool into n_clients disjoint chunks as evenly as possible
+    # np.array_split handles unequal sizes automatically
+    private_chunks = [list(chunk) for chunk in
+                      np.array_split(private_pool, n_clients)]
+
+    distributions: dict[int, list[str]] = {}
+    for i in range(n_clients):
+        distributions[i] = shared_pool + private_chunks[i]
+
+    # ── diagnostics ──────────────────────────────────────────────────
+    print(f"\n--- Domain Distribution (p={p:.2f}, N={n_clients}, D={D}) ---")
+    print(f"  Shared pool  ({k_shared} domains): {shared_pool}")
+    print(f"  Private pool ({k_private} domains) split into {n_clients} chunks:")
+    for i, chunk in enumerate(private_chunks):
+        print(f"    chunk {i}: {chunk}")
+    print(f"  Per-client assignment:")
+    for i, dlist in distributions.items():
+        print(f"    Client {i} ({len(dlist)} domains): {dlist}")
+
+    return distributions
+
+
 def create_domains(domains_path, assigned_domains=None):
 
         # Iterate over each item in the source folder.
@@ -273,8 +343,41 @@ def parse_args():
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate for local optimizers')
     parser.add_argument('--algorithm', type=str, default='tvae',
-                        choices=['fedavg', 'tvae', 'tabvae', 'Rvae', 'replay', 'pcflta', 'gmm', 'timevae'],
+                        choices=['fedavg', 'tvae', 'tabvae', 'Rvae', 'replay', 'pcflta', 'gmm', 'timevae', 'efl'],
                         help='Federated learning algorithm to use')
+
+    # Domain distribution
+    parser.add_argument('--overlap_p', type=float, default=0.0,
+                        help='Domain overlap fraction p in [0,1]. '
+                             'p=0: fully disjoint (each client sees different domains). '
+                             'p=1: fully shared (all clients see all domains). '
+                             'p=x: x*D domains shared; rest split disjointly.')
+
+    # Generator selection
+    parser.add_argument('--generator', type=str, default='both',
+                        choices=['zirvae', 'tabddpm', 'both'],
+                        help='Which generator to train: zirvae, tabddpm, or both (default: both).')
+
+    # Generator training epochs
+    parser.add_argument('--zirvae_epochs', type=int, default=200,
+                        help='Epochs to train ZI-RVAE generator per client (default: 200).')
+    parser.add_argument('--tabddpm_epochs', type=int, default=500,
+                        help='Epochs to train TabDDPM generator per client (default: 500).')
+
+    # Time steps
+    parser.add_argument('--tot_time_steps', type=int, default=4,
+                        help='Number of time steps to run (default: 4).')
+
+    # Attack type filter
+    parser.add_argument('--attacktype', type=str, default=None,
+                        help='Filter domains by attack type substring '
+                             '(e.g. "worstparent", "disflooding"). '
+                             'If omitted, all domains are used.')
+
+    # EFL options
+    parser.add_argument('--load_decoders', action='store_true',
+                        help='Skip Phase 1 and load saved pool decoders '
+                             'directly to train the Teacher (Phase 2b only).')
 
     # Paths and environment
     parser.add_argument('--seed', type=int, default=42,

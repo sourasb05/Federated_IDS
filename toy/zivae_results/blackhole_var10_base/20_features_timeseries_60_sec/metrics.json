@@ -1,0 +1,110 @@
+{
+  "csv": "/Users/souba636/Documents/Research/Projects/vinnova_paper_2/Federated_IDS/attack_data/blackhole_var10_base/20_features_timeseries_60_sec.csv",
+  "domain": "blackhole_var10_base",
+  "file": "20_features_timeseries_60_sec.csv",
+  "n_train": 430,
+  "n_features": 14,
+  "n_sparse": 7,
+  "sparse_features": [
+    "disr",
+    "diss",
+    "diar",
+    "disr.1",
+    "diss.1",
+    "dios.1",
+    "diar.1"
+  ],
+  "ks_mean": 0.1601,
+  "ks_pass": 4,
+  "ks_total": 14,
+  "ks_per_feature": [
+    {
+      "feature": "dios.1",
+      "ks_stat": 0.4009,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "diar",
+      "ks_stat": 0.2839,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "diar.1",
+      "ks_stat": 0.2796,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "rank",
+      "ks_stat": 0.214,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "dior.1",
+      "ks_stat": 0.2107,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "rank.1",
+      "ks_stat": 0.2074,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "tots.1",
+      "ks_stat": 0.2039,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "tots",
+      "ks_stat": 0.1682,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "dios",
+      "ks_stat": 0.156,
+      "p_value": 0.0,
+      "pass": false
+    },
+    {
+      "feature": "dior",
+      "ks_stat": 0.1138,
+      "p_value": 0.0007,
+      "pass": false
+    },
+    {
+      "feature": "diss",
+      "ks_stat": 0.002,
+      "p_value": 1.0,
+      "pass": true
+    },
+    {
+      "feature": "diss.1",
+      "ks_stat": 0.001,
+      "p_value": 1.0,
+      "pass": true
+    },
+    {
+      "feature": "disr",
+      "ks_stat": 0.0,
+      "p_value": 1.0,
+      "pass": true
+    },
+    {
+      "feature": "disr.1",
+      "ks_stat": 0.0,
+      "p_value": 1.0,
+      "pass": true
+    }
+  ],
+  "tstr_f1": 1.0,
+  "trts_f1": 1.0,
+  "base_f1": 1.0,
+  "gap": 0.0
+}
