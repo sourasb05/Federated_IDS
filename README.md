@@ -1,230 +1,198 @@
-# Federated IDS (LSTM) — Sequential Windowed Training Across Domains
+# Federated IDS — Event-Driven Continual Federated Learning (EFL)
 
-This repo trains a **federated** LSTM classifier over multiple **IDS “domains”** (each domain = a folder of CSVs).
-Per round, the global model is sent to each domain, trained locally, then **aggregated by data-size weighting** (FedAvg style).
-Evaluation is done **per domain** with Accuracy, F1, AUC (binary), Confusion Matrix, and (optionally) loss.
-
-
-### requirements.txt
-
-```text
-numpy
-pandas
-scikit-learn
-scipy
-matplotlib
-torch
-```
-
-> Note: Installing `torch` sometimes depends on your CUDA version. If you need GPU support, follow the command from [https://pytorch.org](https://pytorch.org) for your system (e.g., `pip install torch --index-url https://download.pytorch.org/whl/cu121`).
+An **Event-Driven Continual Federated Learning** system for IoT Intrusion Detection.  
+Clients use generative models (TabDDPM / ZI-RVAE) to synthesize attack data locally, share only model weights (no raw data), and train a distillation-based student classifier that is resilient to catastrophic forgetting.
 
 ---
 
-## Features
+## System Overview
 
-* Sliding-window sequence creation from raw per-timestep CSVs
-* Train/test split per domain (file-level)
-* Per-domain **min–max normalization** (using *train* files only; safe, NaN/Inf-proof)
-* **LSTMClassifier** (two-layer MLP head) and an optional **LSTMModelWithAttention**
-* Federated loop with **size-weighted model aggregation**
-* Metrics: Accuracy, F1 (binary or macro), ROC-AUC (binary), Confusion Matrix
-* CUDA/MPS detection (GPU if available)
+```
+Phase 1  →  Each client trains a generative model (TabDDPM / ZI-RVAE) on local attack data
+Phase 2a →  Server fingerprints clients via MMD² on attack samples (admission gate)
+Phase 2b →  Server trains a multi-class Teacher model on pooled synthetic attack data
+Phase 3  →  Teacher logits broadcast back to clients
+Phase 4  →  Each client trains a binary Student via task loss + KL distillation (Distilled Replay)
+```
+
+Metrics reported per client: Accuracy, F1 (macro + weighted), Baseline Student vs Distilled Student comparison.
 
 ---
 
 ## Folder Structure
 
 ```
-repo/
-├─ src/
-│  ├─ main.py                 # entry point (training + federation + eval)
-│  ├─ evaluate_model.py       # evaluation utilities
-│  ├─ models.py               # LSTMClassifier & LSTMModelWithAttention
-│  └─ utils.py                # data loading, windowing, normalization, helpers
-├─ attack_data/               # (you create this) domains and CSVs live here
-│  ├─ domain_A/
-│  │  ├─ ..._1_60_sec.csv
-│  │  ├─ ..._2_60_sec.csv
-│  │  └─ ...
-│  └─ domain_B/
-│     └─ ...
-├─ results/                   # (created automatically if you save JSON later)
-├─ requirements.txt
-└─ README.md
+Federated_IDS/
+├── src/
+│   ├── main.py              # entry point
+│   ├── client_EFL.py        # EFL client: generator training, student training, distillation
+│   ├── server_EFL.py        # EFL server: MMD admission, Teacher training, Phase 4
+│   ├── models.py            # TabDDPM, ZI-RVAE, TeacherModel, StudentModel
+│   ├── utils.py             # data loading, windowing, normalization, CLI args
+│   └── evaluate_model.py    # evaluation utilities
+├── toy/
+│   └── tsne_tabddpm_vs_real.py   # t-SNE + precision/recall overlap analysis
+├── attack_data/
+│   └── <domain>/            # one subfolder per attack domain, each with CSVs
+├── saved_models_efl/
+│   └── <attacktype>/        # denoiser checkpoints saved here
+├── results/
+│   └── <attacktype>/        # JSON metrics saved here
+├── requirements.txt
+├── SETUP.md                 # full setup instructions
+└── README.md
 ```
 
 ---
 
-## Data Expectations
+## Quick Setup
 
-* Place all data under: `attack_data/<domain_name>/`
-* Each CSV **must** contain a column named `label` with integer values:
-
-  * `0` = benign
-  * `1` = attack
-* Other columns are numeric features.
-* Filenames are sorted and (optionally) parsed with a pattern like `..._<index>_60_sec.csv` so that the code can keep a consistent ordering per domain.
-
-**Windowing**
-From each CSV, we build sliding windows:
-
-* `window_size` = sequence length
-* `step_size` = stride between windows
-* Each window becomes a single training sample, labeled with the **last** time step’s label.
-
----
-
-## Installation
+See [SETUP.md](SETUP.md) for full instructions. Short version:
 
 ```bash
-# (Recommended) Use Python 3.9+ and a fresh virtual environment
-python -m venv .venv
-source .venv/bin/activate    # Windows: .venv\Scripts\activate
+git clone https://github.com/sourasb05/Federated_IDS.git
+cd Federated_IDS
+git checkout toy-experiments
 
-pip install --upgrade pip
+# Conda (recommended for Apple Silicon / CUDA GPU)
+conda create -n fedids python=3.11 -y && conda activate fedids
+conda install pytorch==2.0.1 -c pytorch -y   # add MPS/CUDA flags as needed — see SETUP.md
 pip install -r requirements.txt
-
-# If you need a specific CUDA build of PyTorch, install it from pytorch.org instead of the generic `torch` above.
 ```
 
 ---
 
-## Quick Start
-
-From the `src/` directory:
+## Running the EFL System
 
 ```bash
-python main.py
-  --input_size 140
-  --hidden_size 64 
-  --num_layers 1 
-  --output_size 2
-  --window_size 10
-  --step_size 3
-  --batch_size 64
-  --global_iters 5
-  --local_epochs 5
-  --lr 0.001
+cd src
+
+# TabDDPM only, localrepair domains, 1 time step
+python main.py \
+    --algorithm efl \
+    --generator tabddpm \
+    --attacktype localrepair \
+    --tot_time_steps 1 \
+    --tabddpm_epochs 500
+
+# Both generators, all domains, 4 time steps
+python main.py \
+    --algorithm efl \
+    --generator both \
+    --tot_time_steps 4 \
+    --zirvae_epochs 200 \
+    --tabddpm_epochs 500
+
+# Skip Phase 1 — load saved denoiser checkpoints directly
+python main.py \
+    --algorithm efl \
+    --generator tabddpm \
+    --attacktype localrepair \
+    --load_decoders
 ```
-or just try
+
+---
+
+## CLI Flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--algorithm` | `efl` | FL algorithm: `efl`, `fedavg`, `replay`, … |
+| `--generator` | `both` | Generator: `tabddpm`, `zirvae`, or `both` |
+| `--attacktype` | all | Filter domains by substring, e.g. `localrepair`, `worstparent` |
+| `--tot_time_steps` | `4` | Number of EFL time steps |
+| `--tabddpm_epochs` | `500` | TabDDPM training epochs per class per client |
+| `--zirvae_epochs` | `200` | ZI-RVAE training epochs per client |
+| `--overlap_p` | `0.0` | Domain overlap across clients (0 = disjoint, 1 = fully shared) |
+| `--load_decoders` | off | Skip Phase 1, load saved checkpoints |
+| `--window_size` | `10` | Sliding window length |
+| `--batch_size` | `64` | Mini-batch size |
+| `--lr` | `0.001` | Learning rate |
+| `--seed` | `42` | Random seed |
+
+---
+
+## Generators
+
+### TabDDPM (recommended)
+Gaussian diffusion over tabular/time-series windows.  
+- Architecture: sinusoidal time embedding → 4 × residual MLP blocks (hidden=512) → output  
+- ~2.57M parameters per class denoiser, ~9.84 MB per class  
+- Conditional: one denoiser per class (benign / attack)  
+- Checkpoint saved immediately after each class: `saved_models_efl/<attacktype>/tabddpm_client<id>_<domain>_<class>.pt`
+
+### ZI-RVAE
+Zero-Inflated Recurrent VAE with GRU encoder.  
+- Monotone KL schedule with free-bits to prevent posterior collapse  
+- ~0.8 MB per decoder — much lighter than TabDDPM  
+
+---
+
+## t-SNE Overlap Analysis
+
+Visualise and quantify how well TabDDPM synthetic attack samples match real ones:
 
 ```bash
-python main.py
-
+# Edit DATA_DIR, CKPT_PATH, OUT_PATH at the top of the script to select domain/client
+python toy/tsne_tabddpm_vs_real.py
 ```
 
+**Metrics printed:**
 
-You should see logs like:
+| Metric | Meaning |
+|---|---|
+| Precision | % synthetic timesteps inside real data manifold (fidelity) |
+| Recall | % real timesteps covered by synthetic manifold (coverage) |
+| F1 overlap | Harmonic mean of precision and recall |
+| MMD² | RBF-kernel distribution distance (lower = closer) |
+
+Colors follow the Wong (2011) color-blind-friendly palette: **blue = real**, **orange = synthetic**.
+
+---
+
+## Data Format
+
+- Place data under `attack_data/<domain_name>/` — one subfolder per attack scenario  
+- Each CSV must have a `label` column: `0` = benign, `1` = attack  
+- All other columns are numeric features  
+- Files are sorted; first 16 → train, last 4 → test  
+- 20 files per domain expected (code takes `[:20]`)
+
+---
+
+## Saved Model Paths
 
 ```
-Using device: cuda
---- Global Iteration 1 / 5 ---
-Training on domain: blackhole_var10_base
-Epoch 1/5, Loss: 0.6934
-...
-[blackhole_var10_base] n=2160 | acc=0.5111111402511597 | f1=0.676470588235294 | auc=0.5004734848484849 | loss=21.529428482055664 | cm=[[   0 1056]
- [   0 1104]]
-[blackhole_var10...
-=== Aggregates (computed from per-domain) ===
-Accuracy: 59.82%
-F1: 0.5477
-AUC : 0.7422
-Loss : 5.4910
+saved_models_efl/<attacktype>/tabddpm_client<id>_<domain>_attack.pt
+saved_models_efl/<attacktype>/tabddpm_client<id>_<domain>_benign.pt
+saved_models_efl/<attacktype>/zirvae_decoder_client<id>_<domain>.pt
 ```
-
----
-
-## Command-Line Arguments
-
-| Arg              |     Default | Description                                                                                                                                                                                 |
-| ---------------- | ----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--input_size`   |         140 | Number of flattened features per time step (after windowing this becomes your time dimension × features, but code currently flattens time into features and uses seq len 1; see **Notes**). |
-| `--hidden_size`  |          64 | LSTM hidden size.                                                                                                                                                                           |
-| `--num_layers`   |           1 | LSTM layers.                                                                                                                                                                                |
-| `--output_size`  |           2 | Number of classes (binary IDS).                                                                                                                                                             |
-| `--window_size`  |          10 | Sliding window length (per CSV).                                                                                                                                                            |
-| `--step_size`    |           3 | Stride between windows.                                                                                                                                                                     |
-| `--batch_size`   |          64 | Mini-batch size.                                                                                                                                                                            |
-| `--global_iters` |           5 | Federated rounds.                                                                                                                                                                           |
-| `--local_epochs` |           5 | Local epochs per domain per round.                                                                                                                                                          |
-| `--lr`           |       0.001 | Local optimizer LR (Adam).                                                                                                                                                                  |
-| `--seed`         |          42 | Random seed.                                                                                                                                                                                |
-| `--save_dir`     | `./results` | Where to store outputs if you add saving.                                                                                                                                                   |
-
----
-
-## Notes on the Model Shapes
-
-* In `utils.load_data`, windows are flattened and then reshaped to `(B, 1, feature_dim)`, so the LSTM sequence length is **1** and `feature_dim = (#features × window_size)`.
-
-  * This keeps your model as an LSTM while effectively acting like a 1-step sequence with a large feature vector.
-  * If you prefer a **true temporal** LSTM (seq len = `window_size`), change the data prep to keep shape `(B, window_size, #features)` and set `input_size = #features`.
-
-* `LSTMClassifier` returns `(logits, (h_n, c_n))`.
-
-* `LSTMModelWithAttention` returns `(logits, context)` and can be swapped into `main.py` if desired.
-
----
-
-## Evaluation Details
-
-`evaluate_model.eval_global` computes:
-
-* **Accuracy**
-* **F1**: binary if 2 classes; macro otherwise
-* **AUC**: only for binary when both classes are present in the batch
-* **Confusion Matrix**
-* **Loss** (Cross-Entropy), when tensors are compatible
-
-Per-domain results are printed each round. A simple weighted aggregate (by number of samples) is printed at the end of each round.
-
----
-
-## Data & Naming Conventions
-
-* Domains are discovered from subfolders in `attack_data/`.
-* Per domain, files are sorted; first 16 files → **train**, last 4 files → **test** (you can change this in `utils.load_data`).
-* CSVs must include a **`label`** column; all other columns are treated as numeric features.
 
 ---
 
 ## Troubleshooting
 
-* **`FileNotFoundError: .../attack_data`**
-  Ensure your data directory exists: `attack_data/<domain>/*.csv`.
-
-* **`'label' column missing`**
-  Each CSV must have a `label` column with 0/1 values.
-
-* **AUC is `None`**
-  Happens when a test batch contains only one class (all 0s or all 1s). That’s expected behavior.
-
-* **CUDA not used**
-  You’ll see `Using device: cpu`. Check PyTorch install and GPU drivers.
+| Error | Fix |
+|---|---|
+| `FileNotFoundError: attack_data` | Create `attack_data/<domain>/` and place CSVs there |
+| `'label' column missing` | Every CSV must have a `label` column with 0/1 values |
+| Phase 1 prints `ZI-RVAE` when using `--generator tabddpm` | Ensure `client_EFL.py` is up to date — pull latest |
+| Denoiser checkpoint not found with `--load_decoders` | Run Phase 1 first (without `--load_decoders`) to save checkpoints |
+| CUDA/MPS not detected | Check PyTorch install — see [SETUP.md](SETUP.md) |
 
 ---
 
-## Optional: .gitignore (suggested)
-
-Create a `.gitignore` in repo root:
+## .gitignore (suggested)
 
 ```
-# Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 .venv/
-.env
-.ipynb_checkpoints/
-
-# Data & results
+venv/
 attack_data/
+saved_models_efl/
 results/
-wandb/
-
-# OS
-.DS_Store
-Thumbs.db
+*.png
+*.DS_Store
+efl_metrics.json
 ```
----

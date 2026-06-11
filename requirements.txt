@@ -1,0 +1,21 @@
+# Core ML framework
+torch==2.0.1
+
+# Data & numerics
+numpy>=1.24
+pandas>=1.5
+scipy==1.10.1
+
+# ML utilities
+scikit-learn==1.6.1
+scikit-image==0.20.0
+
+# Visualisation
+matplotlib==3.7.1
+seaborn==0.12.2
+
+# Progress bar
+tqdm==4.65.0
+
+# Web (used by some server modules)
+flask==3.1.0
